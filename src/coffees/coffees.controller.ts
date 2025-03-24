@@ -3,15 +3,16 @@ import { CoffeesService } from './coffees.service';
 import { Coffee } from './entities/coffee.entity';
 import { CreateCoffeeDto } from './dto/create-coffee.dto/create-coffee.dto';
 import { UpdateCoffeeDto } from './dto/update-coffee.dto/update-coffee.dto';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto/pagination-query.dto';
 
 @Controller('coffees')
 export class  CoffeesController {
     constructor(private readonly coffeesService: CoffeesService) {}
  
     @Get()
-    async findAll(@Query() paginationQuery) : Promise<Coffee[]> {
+    async findAll(@Query() paginationQuery: PaginationQueryDto) : Promise<Coffee[]> {
         //const {limit, offset} = paginationQuery;
-        return await this.coffeesService.findAll();
+        return await this.coffeesService.findAll(paginationQuery);
     }
  
     @Get(':id')
