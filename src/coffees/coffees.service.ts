@@ -21,8 +21,6 @@ export class CoffeesService {
 
     private readonly dataSource: DataSource,
 
-    private readonly configService: ConfigService,
-
     @Inject(coffeesConfig.KEY)
     private readonly coffeesConfiguration: ConfigType<typeof coffeesConfig>,
   ) {
