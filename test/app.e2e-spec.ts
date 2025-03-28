@@ -1,13 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
-import { App } from 'supertest/types';
+import request from 'supertest';
 import { AppModule } from './../src/app.module';
 
 describe('AppController (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -17,9 +16,17 @@ describe('AppController (e2e)', () => {
   });
 
   it('/ (GET)', () => {
+    if (!process.env.API_KEY) {
+      throw new Error('API_KEY is not set in environment variables.');
+    }
+
     return request(app.getHttpServer())
       .get('/')
-      .expect(200)
-      .expect('Hello World!');
+      .set('Authorization', process.env.API_KEY)
+      .expect(200);
+  });
+
+  afterAll(async () => {
+    await app.close();
   });
 });

@@ -1,6 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { AppService } from 'src/app.service';
+import { AppService } from '../app.service';
 import { ApiKeyGuard } from './guards/api-key/api-key.guard';
 import { ConfigModule } from '@nestjs/config';
 import { LoggingMiddleware } from './middleware/logging/logging.middleware';

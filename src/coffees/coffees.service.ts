@@ -6,9 +6,10 @@ import { CreateCoffeeDto } from './dto/create-coffee.dto/create-coffee.dto';
 import { UpdateCoffeeDto } from './dto/update-coffee.dto/update-coffee.dto';
 import { Flavor } from './entities/flavor.entity/flavor.entity';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto/pagination-query.dto';
-import { Event } from 'src/events/entities/event.entity/event.entity';
-import { ConfigService, ConfigType } from '@nestjs/config';
-import coffeesConfig from './config/coffees.config';
+import { ConfigType } from '@nestjs/config';
+import { coffeesConfig } from './config/coffees.config';
+import { Event } from '../events/entities/event.entity';
+
 
 @Injectable()
 export class CoffeesService {
@@ -17,15 +18,15 @@ export class CoffeesService {
     private readonly coffeeRepository: Repository<Coffee>,
 
     @InjectRepository(Flavor)
-    private readonly flavorRepository: Repository<Flavor>,
+    private readonly flavorRepository: Repository<Flavor>, 
 
     private readonly dataSource: DataSource,
 
     @Inject(coffeesConfig.KEY)
     private readonly coffeesConfiguration: ConfigType<typeof coffeesConfig>,
   ) {
-    console.log(`${JSON.stringify(this.coffeesConfiguration.foo )}`);
-  } 
+    // console.log(`${JSON.stringify(this.coffeesConfiguration.foo)}`);
+  }
 
   async findAll(paginationQuery: PaginationQueryDto): Promise<Coffee[]> {
     const { limit, offset } = paginationQuery;
@@ -43,7 +44,7 @@ export class CoffeesService {
     });
 
     if (!coffee) {
-      throw new NotFoundException(`Coffee with ID ${id} not found`);
+      throw new NotFoundException(`Coffee # ${id} not found`);
     }
 
     return coffee;

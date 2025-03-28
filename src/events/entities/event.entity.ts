@@ -24,7 +24,7 @@ export class Event {
   payload: Record<string, any>;
 
   @CreateDateColumn({ type: 'timestamp' })
-  createdAt: Date; 
+  createdAt: Date;
 
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;

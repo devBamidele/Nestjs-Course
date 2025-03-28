@@ -1,6 +1,6 @@
 import { registerAs } from "@nestjs/config";
 
 
-export default registerAs('coffees', () => ({
-    foo : 'bar',
-}))
+export const coffeesConfig = registerAs('coffees', () => ({
+    foo: 'bar',
+}));
