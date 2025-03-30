@@ -1,71 +1,88 @@
-  import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Coffee } from './entities/coffee.entity';
+import { Connection, Model } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { CreateCoffeeDto } from './dto/create-coffee.dto/create-coffee.dto';
+import { UpdateCoffeeDto } from './dto/update-coffee.dto/update-coffee.dto';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto/pagination-query.dto';
 
 @Injectable()
-export class  CoffeesService {
-    private coffees: Coffee[] = [
-        {
-            id: 1,
-            name: 'Espresso',
-            brand: 'Starbucks',
-            flavours: ['strong', 'bitter']
-        },
-        {
-            id: 2,
-            name: 'Latte',
-            brand: 'Costa Coffee',
-            flavours: ['creamy', 'smooth']
-        },
-        {
-            id: 3,
-            name: 'Cappuccino ',
-            brand: 'Lavazza',
-            flavours: ['frothy', 'rich']
-        },
-        {
-            id: 4,
-            name: 'Mocha',
-            brand: 'Nescafe',
-            flavours: ['chocolate', 'sweet']
-        },
-        {
-            id: 5,
-            name: 'Americano',
-            brand: 'Dunkin’ Donuts',
-            flavours: ['bold', 'smooth']
-        }
-    ];
+export class CoffeesService {
+  constructor(
+    @InjectModel(Coffee.name) private readonly coffeeModel: Model<Coffee>,
 
-    findAll() : Coffee[] {
-        return this.coffees;
+    @InjectConnection() private readonly connection: Connection,
+
+    @InjectModel(Event.name) private readonly eventModel: Model<Event>,
+  ) {}
+
+  async findAll(paginationQueryDto: PaginationQueryDto): Promise<Coffee[]> {
+    const { limit, offset } = paginationQueryDto;
+    return await this.coffeeModel.find().skip(offset).limit(limit).exec();
+  }
+
+  async findOne(id: string) {
+    const coffee = this.coffeeModel.findOne({ _id: id }).exec();
+
+    if (!coffee) {
+      throw new NotFoundException(`Coffee ${id} not found`);
     }
 
-    findOne(id: string) {
-        const coffee = this.coffees.find(item => item.id === +id);
+    return coffee;
+  }
 
-        if(!coffee){
-            throw new NotFoundException(`Coffee ${id} not found`);
-        }
+  create(createCoffeeDto: CreateCoffeeDto) {
+    const coffee = new this.coffeeModel(createCoffeeDto);
+    return coffee.save();
+  }
 
-        return coffee; 
+  update(id: string, updateCoffeeDto: UpdateCoffeeDto) {
+    const existingCoffee = this.coffeeModel
+      .findOneAndUpdate({ _id: id }, { $set: updateCoffeeDto }, { new: true })
+      .exec();
+    if (!existingCoffee) {
+      throw new NotFoundException(`Coffee ${id} not found`);
     }
 
-    create(createCoffeeDto: any) {
-        this.coffees.push(createCoffeeDto);
-        return createCoffeeDto;
+    return existingCoffee;
+  }
+
+  async remove(id: string) {
+    const coffee = await this.coffeeModel.findByIdAndDelete(id);
+
+    if (!coffee) {
+      throw new NotFoundException(`Coffee ${id} not found`);
     }
 
-     update(id: string, updateCoffeeDto: any){
-        const existingCoffee = this.findOne(id);
-        if(existingCoffee){}
-    }
+    return { message: 'Coffee deleted successfully' };
+  }
 
-    remove(id: string) {
-        const coffeeIndex = this.coffees.findIndex(item => item.id === +id);
-    
-        if (coffeeIndex !== -1) {
-            this.coffees.splice(coffeeIndex, 1); // Remove the coffee at the found index
-        }
-    }
+  async recommendCoffee(coffee: Coffee) {
+    const session = await this.connection.startSession();
+    session.startTransaction();
 
+    try {
+      coffee.recommendation++;
+
+      const recommendEvent = new this.eventModel({
+        name: 'recommend-coffee',
+        type: 'coffee',
+        payload: { coffeeId: coffee.id },
+      });
+
+      await recommendEvent.save({ session });
+      await coffee.save({ session });
+
+      await session.commitTransaction();
+    } catch (err) {
+      await session.abortTransaction();
+    } finally {
+      session.endSession();
+    }
+  }
 }
